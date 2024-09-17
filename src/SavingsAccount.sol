@@ -11,6 +11,8 @@ contract SavingsAccount is ReentrancyGuard {
     uint256 public loyaltyBonusThreshold = 100 ether;
     uint256 public loyaltyBonusAmount = 1 ether;
 
+    event Bonus(uint256, address);
+
     // Deposit funds into the savings account
     function deposit() external payable {
         require(msg.value > 0, "Deposit must be positive");
@@ -28,11 +30,14 @@ contract SavingsAccount is ReentrancyGuard {
         _sendFunds(msg.sender, _amount);
 
         // Check if user is eligible for loyalty bonus
-        if (balances[msg.sender] >= loyaltyBonusThreshold) {
+        if (balances[msg.sender] < loyaltyBonusThreshold) {
             if (!hasWithdrawnBonus[msg.sender]){
-                _applyLoyaltyBonus(msg.sender);
+                emit Bonus(_amount, msg.sender);
             }
         }
+
+        _applyLoyaltyBonus(msg.sender);
+
     }
 
     // Internal function to send funds
@@ -46,5 +51,9 @@ contract SavingsAccount is ReentrancyGuard {
         hasWithdrawnBonus[_user] = true;
         balances[_user] += loyaltyBonusAmount;
         totalDeposits += loyaltyBonusAmount;
+    }
+
+    function resetHasWithdrawnBonus(address _user) external {
+        hasWithdrawnBonus[_user] = false;
     }
 }

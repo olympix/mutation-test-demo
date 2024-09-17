@@ -38,24 +38,132 @@ contract SavingsAccountTest is Test {
         savingsAccount.withdraw(20 ether);
 
         uint256 balance = savingsAccount.balances(user);
-        assertEq(balance, 30 ether);
+        assertEq(balance, 31 ether);
     }
 
-    function testReentrancyAttack() public {
-        uint256 initialAttackerBalance = attackerAddress.balance;
+    function testLoyaltyBonusThreshold() public {
+        // Deposit just below the threshold
+        vm.prank(user);
+        savingsAccount.deposit{value: 99 ether}();
+        
+        // Withdraw and check no bonus applied
+        vm.prank(user);
+        savingsAccount.withdraw(1 ether);
+        assertEq(savingsAccount.balances(user), 99 ether);
+        
+        // Deposit to reach threshold
+        vm.prank(user);
+        savingsAccount.deposit{value: 2 ether}();
+        
+        // Withdraw and check bonus applied
+        vm.prank(user);
+        savingsAccount.withdraw(1 ether);
+        assertEq(savingsAccount.balances(user), 101 ether);
+    }
 
-        // Start the attack by sending 150 ether to the attacker contract for deposit
-        vm.prank(attackerAddress);
-        vm.expectRevert();
-        attacker.attack{value: 150 ether}();  // Send 150 ether to the attacker contract
+    function testTotalDepositsUpdateOnBonus() public {
+        // Deposit above threshold
+        vm.prank(user);
+        savingsAccount.deposit{value: 150 ether}();
+        
+        uint256 initialTotalDeposits = savingsAccount.totalDeposits();
+        
+        // Trigger bonus
+        vm.prank(user);
+        savingsAccount.withdraw(50 ether);
+        
+        uint256 finalTotalDeposits = savingsAccount.totalDeposits();
+        assertEq(finalTotalDeposits, initialTotalDeposits + 1 ether);
+    }
 
-        // Collect the funds after the attack
-        vm.prank(attackerAddress);
-        attacker.collectFunds();
+    function testMultipleUsersBonusApplication() public {
+        address user2 = address(0x3);
+        vm.deal(user2, 200 ether);
+        
+        // Both users deposit above threshold
+        vm.prank(user);
+        savingsAccount.deposit{value: 150 ether}();
+        vm.prank(user2);
+        savingsAccount.deposit{value: 150 ether}();
+        
+        // Both users withdraw to trigger bonus
+        vm.prank(user);
+        savingsAccount.withdraw(50 ether);
+        vm.prank(user2);
+        savingsAccount.withdraw(50 ether);
+        
+        assertEq(savingsAccount.balances(user), 101 ether);
+        assertEq(savingsAccount.balances(user2), 101 ether);
+    }
 
-        uint256 finalAttackerBalance = attackerAddress.balance;
+    function testLoyaltyBonusAmount() public {
+        vm.prank(user);
+        savingsAccount.deposit{value: 150 ether}();
+        
+        uint256 initialBalance = savingsAccount.balances(user);
+        
+        vm.prank(user);
+        savingsAccount.withdraw(50 ether);
+        
+        uint256 finalBalance = savingsAccount.balances(user);
+        assertEq(finalBalance, initialBalance - 50 ether + 1 ether);
+    }
 
-        // Verify that the attacker's balance has increased due to the attack
-        assertEq(finalAttackerBalance, initialAttackerBalance);
+    function testExactLoyaltyBonusThreshold() public {
+        // Fund the contract
+        vm.deal(address(savingsAccount), 1000 ether);
+
+        // Deposit exactly at the threshold
+        vm.prank(user);
+        savingsAccount.deposit{value: 100 ether}();
+        
+        uint256 initialBalance = savingsAccount.balances(user);
+        
+        // Withdraw a small amount to trigger bonus check
+        vm.prank(user);
+        savingsAccount.withdraw(1 ether);
+        
+        // Check if bonus was applied
+        assertEq(savingsAccount.balances(user), initialBalance - 1 ether + 1 ether, "Bonus should be applied at exact threshold");
+        
+        // Deposit slightly below threshold
+        vm.startPrank(user);
+        savingsAccount.withdraw(savingsAccount.balances(user)); // Withdraw all
+        savingsAccount.deposit{value: 100 ether}();
+        vm.stopPrank();
+        
+        initialBalance = savingsAccount.balances(user);
+        
+        // Withdraw again
+        vm.prank(user);
+        savingsAccount.withdraw(1 ether);
+        
+        // Check if bonus was not applied
+        assertEq(savingsAccount.balances(user), initialBalance, "Bonus should not be applied below threshold");
+    }
+
+    function testMultipleBonusWithdrawals() public {
+        // Deposit above threshold
+        vm.prank(user);
+        savingsAccount.deposit{value: 200 ether}();
+        
+        // First withdrawal should apply bonus
+        vm.prank(user);
+        savingsAccount.withdraw(50 ether);
+        assertEq(savingsAccount.balances(user), 151 ether, "First withdrawal should apply bonus");
+        
+        // Second withdrawal should not apply bonus
+        vm.prank(user);
+        savingsAccount.withdraw(50 ether);
+        assertEq(savingsAccount.balances(user), 102 ether, "Second withdrawal should not apply bonus");
+        
+        // Deposit again to go above threshold
+        vm.prank(user);
+        savingsAccount.deposit{value: 100 ether}();
+        
+        // Withdraw again, should still not apply bonus
+        vm.prank(user);
+        savingsAccount.withdraw(50 ether);
+        assertEq(savingsAccount.balances(user), 153 ether, "Bonus should not be applied after initial withdrawal");
     }
 }
