@@ -28,8 +28,10 @@ contract SavingsAccount is ReentrancyGuard {
         _sendFunds(msg.sender, _amount);
 
         // Check if user is eligible for loyalty bonus
-        if (_isEligibleForBonus(msg.sender)) {
-            _applyLoyaltyBonus(msg.sender);
+        if (balances[msg.sender] >= loyaltyBonusThreshold) {
+            if (!hasWithdrawnBonus[msg.sender]){
+                _applyLoyaltyBonus(msg.sender);
+            }
         }
     }
 
@@ -38,12 +40,6 @@ contract SavingsAccount is ReentrancyGuard {
         (bool success, ) = payable(_recipient).call{value: _amount}("");
         require(success, "Transfer failed");
     }
-
-    // Internal function to check eligibility for loyalty bonus
-    function _isEligibleForBonus(address _user) internal view returns (bool) {
-        return (balances[_user] >= loyaltyBonusThreshold && !hasWithdrawnBonus[_user]);
-    }
-
 
     // Internal function to apply loyalty bonus
     function _applyLoyaltyBonus(address _user) internal {
