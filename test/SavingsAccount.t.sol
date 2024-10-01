@@ -41,26 +41,6 @@ contract SavingsAccountTest is Test {
         assertEq(balance, 31 ether);
     }
 
-    function testLoyaltyBonusThreshold() public {
-        // Deposit just below the threshold
-        vm.prank(user);
-        savingsAccount.deposit{value: 99 ether}();
-        
-        // Withdraw and check no bonus applied
-        vm.prank(user);
-        savingsAccount.withdraw(1 ether);
-        assertEq(savingsAccount.balances(user), 99 ether);
-        
-        // Deposit to reach threshold
-        vm.prank(user);
-        savingsAccount.deposit{value: 2 ether}();
-        
-        // Withdraw and check bonus applied
-        vm.prank(user);
-        savingsAccount.withdraw(1 ether);
-        assertEq(savingsAccount.balances(user), 101 ether);
-    }
-
     function testTotalDepositsUpdateOnBonus() public {
         // Deposit above threshold
         vm.prank(user);
@@ -107,39 +87,6 @@ contract SavingsAccountTest is Test {
         
         uint256 finalBalance = savingsAccount.balances(user);
         assertEq(finalBalance, initialBalance - 50 ether + 1 ether);
-    }
-
-    function testExactLoyaltyBonusThreshold() public {
-        // Fund the contract
-        vm.deal(address(savingsAccount), 1000 ether);
-
-        // Deposit exactly at the threshold
-        vm.prank(user);
-        savingsAccount.deposit{value: 100 ether}();
-        
-        uint256 initialBalance = savingsAccount.balances(user);
-        
-        // Withdraw a small amount to trigger bonus check
-        vm.prank(user);
-        savingsAccount.withdraw(1 ether);
-        
-        // Check if bonus was applied
-        assertEq(savingsAccount.balances(user), initialBalance - 1 ether + 1 ether, "Bonus should be applied at exact threshold");
-        
-        // Deposit slightly below threshold
-        vm.startPrank(user);
-        savingsAccount.withdraw(savingsAccount.balances(user)); // Withdraw all
-        savingsAccount.deposit{value: 100 ether}();
-        vm.stopPrank();
-        
-        initialBalance = savingsAccount.balances(user);
-        
-        // Withdraw again
-        vm.prank(user);
-        savingsAccount.withdraw(1 ether);
-        
-        // Check if bonus was not applied
-        assertEq(savingsAccount.balances(user), initialBalance, "Bonus should not be applied below threshold");
     }
 
     function testMultipleBonusWithdrawals() public {

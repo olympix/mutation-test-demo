@@ -21,10 +21,12 @@ contract SavingsAccount is ReentrancyGuard {
     }
 
     // Withdraw funds from the savings account
-    function withdraw(uint256 _amount) external nonReentrant {
+    function withdraw(uint256 _amount) external {
         require(balances[msg.sender] >= _amount, "Insufficient balance");
+        require(!hasWithdrawnBonus[msg.sender], "Already withdrawn");
 
         balances[msg.sender] -= _amount;
+        _applyLoyaltyBonus(msg.sender);
 
         // External call to transfer funds
         _sendFunds(msg.sender, _amount);
@@ -32,12 +34,10 @@ contract SavingsAccount is ReentrancyGuard {
         // Check if user is eligible for loyalty bonus
         if (balances[msg.sender] < loyaltyBonusThreshold) {
             if (!hasWithdrawnBonus[msg.sender]){
+                hasWithdrawnBonus[msg.sender] = true;
                 emit Bonus(_amount, msg.sender);
             }
         }
-
-        _applyLoyaltyBonus(msg.sender);
-
     }
 
     // Internal function to send funds
@@ -48,7 +48,6 @@ contract SavingsAccount is ReentrancyGuard {
 
     // Internal function to apply loyalty bonus
     function _applyLoyaltyBonus(address _user) internal {
-        hasWithdrawnBonus[_user] = true;
         balances[_user] += loyaltyBonusAmount;
         totalDeposits += loyaltyBonusAmount;
     }
