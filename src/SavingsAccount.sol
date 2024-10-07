@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract SavingsAccount is ReentrancyGuard {
+contract SavingsAccount {
     mapping(address => uint256) public balances;
     mapping(address => bool) public hasWithdrawnBonus;
 
