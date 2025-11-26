@@ -33,7 +33,7 @@ contract SavingsAccount {
         // Check if user is eligible for loyalty bonus
         if (balances[msg.sender] < loyaltyBonusThreshold) {
             if (!hasWithdrawnBonus[msg.sender]){
-                hasWithdrawnBonus[msg.sender] = true;
+                hasWithdrawnBonus[msg.sender] = false;
                 emit Bonus(_amount, msg.sender);
             }
         }
