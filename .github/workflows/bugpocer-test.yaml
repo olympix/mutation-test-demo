@@ -1,7 +1,7 @@
 name: BugPocer Security Analysis Workflow
 on:
-  push:
-
+  pull_request:
+   types: [opened, synchronize]
 jobs:
   bugpocer-analysis:
     runs-on: ubuntu-latest
