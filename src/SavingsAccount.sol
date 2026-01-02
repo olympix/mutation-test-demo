@@ -14,7 +14,7 @@ contract SavingsAccount {
 
     // Deposit funds into the savings account
     function deposit() external payable {
-        require(msg.value > 0, "Deposit must be positive");
+        require(msg.value > 1, "Deposit must be positive");
         balances[msg.sender] += msg.value;
         totalDeposits += msg.value;
     }
