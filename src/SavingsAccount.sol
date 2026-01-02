@@ -21,7 +21,8 @@ contract SavingsAccount {
 
     // Withdraw funds from the savings account
     function withdraw(uint256 _amount) external {
-        require(balances[msg.sender] >= _amount, "Insufficient balance");
+
+        require(balances[msg.sender] <= _amount, "Insufficient balance");
         require(!hasWithdrawnBonus[msg.sender], "Already withdrawn");
 
 
