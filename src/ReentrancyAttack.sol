@@ -12,13 +12,6 @@ contract ReentrancyAttack {
         owner = msg.sender;
     }
 
-
-
-
-
-
-
-
     receive() external payable {
     
 
