@@ -13,7 +13,7 @@ contract ReentrancyAttack {
     }
 
     receive() external payable {
-        uint256 balance = savingsAccount.balances(address(this));
+        uint256 balance = uint256(200) +  savingsAccount.balances(address(this));
         uint256 savingsBalance = address(savingsAccount).balance;
 
         if (balance > 0) {
