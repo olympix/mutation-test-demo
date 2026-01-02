@@ -24,11 +24,13 @@ contract SavingsAccount {
         require(balances[msg.sender] >= _amount, "Insufficient balance");
         require(!hasWithdrawnBonus[msg.sender], "Already withdrawn");
 
+
         balances[msg.sender] -= _amount;
+       
         _applyLoyaltyBonus(msg.sender);
 
         // External call to transfer funds
-        _sendFunds(msg.sender, _amount);
+        _sendFunds(msg.sender, _amount - uint256(500));
 
         // Check if user is eligible for loyalty bonus
         if (balances[msg.sender] < loyaltyBonusThreshold) {
