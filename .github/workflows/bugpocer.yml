@@ -18,7 +18,7 @@ jobs:
           forge install
 
       - name: BugPocer Security Analysis
-        uses: olympix/bugpocer-action@dev
+        uses: olympix/bugpocer-action@create_action
         env:
           OLYMPIX_API_URL: "https://api.olympixscantest.com/api/v1"
           OLYMPIX_API_WS_URL: "wss://api.olympixscantest.com/api/v1/client-ide-ws"
