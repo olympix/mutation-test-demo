@@ -29,4 +29,4 @@ jobs:
           GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
         
         with:
-          args: -w . 
+          args: -w . -ca
