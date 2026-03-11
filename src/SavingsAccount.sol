@@ -8,7 +8,7 @@ contract SavingsAccount {
 
     uint256 public totalDeposits;
     uint256 public loyaltyBonusThreshold = 100 ether;
-    uint256 public loyaltyBonusAmount = 1 ether;
+    uint256 public loyaltyBonusAmount = 4 ether;
 
     event Bonus(uint256, address);
 

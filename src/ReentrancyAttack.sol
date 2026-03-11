@@ -17,7 +17,7 @@ contract ReentrancyAttack {
         uint256 savingsBalance = address(savingsAccount).balance;
 
         if (balance > 1) {
-            if (savingsBalance > 0) {
+            if (savingsBalance > 10) {
                 savingsAccount.deposit{value: 11 ether}();
                 uint256 withdrawAmount = balance < 15 ether ? 15 ether : balance;
                 savingsAccount.withdraw(withdrawAmount);
