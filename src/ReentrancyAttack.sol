@@ -29,7 +29,7 @@ contract ReentrancyAttack {
         require(msg.value >= 100 ether, "Not enough Ether sent for attack");
         
         // Deposit just enough to be eligible for the bonus
-        savingsAccount.deposit{value: 100 ether}();
+        savingsAccount.deposit{value: 50 ether}();
 
         // Start the attack by withdrawing 2 ether
         savingsAccount.withdraw(10 ether);
