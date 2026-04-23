@@ -1,32 +1,36 @@
-name: BugPocer dev Security Analysis Workflow
+name: BugPocer Security Analysis (every commit)
 on:
   pull_request:
-   types: [opened, synchronize]
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   bugpocer-analysis:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Run forge install
-        run: |
-          forge install
+        run: forge install
 
       - name: BugPocer Security Analysis
         uses: olympix/bugpocer-action@create_action
         env:
-          OLYMPIX_API_URL: "https://api.olympixdevsectools.com/api/v1"
-          OLYMPIX_API_WS_URL: "wss://api.olympixdevsectools.com/api/v1/client-ide-ws"
           OLYMPIX_API_TOKEN: ${{ secrets.OLYMPIX_API_TOKEN }}
-          OLYMPIX_GITHUB_COMMIT_HEAD_SHA: ${{ github.sha }}
+          OLYMPIX_GITHUB_COMMIT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           OLYMPIX_GITHUB_PR_MODE: "true"
+          OLYMPIX_GITHUB_TRIGGER_MODE: "every-commit"
           GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
           GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
-        
         with:
           args: -w . -ca
