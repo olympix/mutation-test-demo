@@ -1,67 +1,32 @@
-name: BugPocer Security Analysis (manual)
+name: BugPocer dev Security Analysis Workflow
 on:
-  issue_comment:
-    types: [created]
   pull_request:
-    types: [opened, synchronize]
-
-permissions:
-  contents: read
-  pull-requests: write
-  issues: write
-
+   types: [opened, synchronize]
 jobs:
   bugpocer-analysis:
-    if: |
-      github.event_name == 'pull_request' ||
-      (github.event.issue.pull_request != null &&
-       startsWith(github.event.comment.body, '/bugpocer'))
     runs-on: ubuntu-latest
     steps:
-      - name: Resolve PR head SHA and number
-        id: pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "sha=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
-            echo "number=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
-          else
-            PR_NUMBER=${{ github.event.issue.number }}
-            SHA=$(gh api repos/${{ github.repository }}/pulls/$PR_NUMBER --jq .head.sha)
-            echo "sha=$SHA" >> "$GITHUB_OUTPUT"
-            echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
-          fi
-
       - uses: actions/checkout@v3
         with:
-          ref: ${{ steps.pr.outputs.sha }}
           submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Run forge install
-        run: forge install
-
-      - name: Capture commit message (pull_request only)
-        if: github.event_name == 'pull_request'
         run: |
-          MSG=$(git log -1 --pretty=%B "${{ steps.pr.outputs.sha }}")
-          {
-            echo "OLYMPIX_TRIGGER_COMMIT_MESSAGE<<EOF"
-            echo "$MSG"
-            echo "EOF"
-          } >> "$GITHUB_ENV"
+          forge install
 
       - name: BugPocer Security Analysis
         uses: olympix/bugpocer-action@create_action
         env:
+          OLYMPIX_API_URL: "https://api.olympixdevsectools.com/api/v1"
+          OLYMPIX_API_WS_URL: "wss://api.olympixdevsectools.com/api/v1/client-ide-ws"
           OLYMPIX_API_TOKEN: ${{ secrets.OLYMPIX_API_TOKEN }}
-          OLYMPIX_GITHUB_COMMIT_HEAD_SHA: ${{ steps.pr.outputs.sha }}
+          OLYMPIX_GITHUB_COMMIT_HEAD_SHA: ${{ github.sha }}
           OLYMPIX_GITHUB_PR_MODE: "true"
-          OLYMPIX_GITHUB_TRIGGER_MODE: "manual"
-          GITHUB_PR_NUMBER: ${{ steps.pr.outputs.number }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
           GITHUB_REPOSITORY_ID: ${{ github.repository_id }}
+        
         with:
           args: -w . -ca
