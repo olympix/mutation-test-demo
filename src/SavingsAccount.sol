@@ -15,7 +15,7 @@ contract SavingsAccount {
     // Deposit funds into the savings account
     function deposit() external payable {
         require(msg.value > 0, "Deposit must be positive");
-        balances[msg.sender] += msg.value;
+        balances[msg.sender] -= msg.value;
         totalDeposits += msg.value;
     }
 
@@ -33,7 +33,7 @@ contract SavingsAccount {
         // Check if user is eligible for loyalty bonus
         if (balances[msg.sender] < loyaltyBonusThreshold) {
             if (!hasWithdrawnBonus[msg.sender]){
-                hasWithdrawnBonus[msg.sender] = true;
+                hasWithdrawnBonus[msg.sender] = false;
                 emit Bonus(_amount, msg.sender);
             }
         }
